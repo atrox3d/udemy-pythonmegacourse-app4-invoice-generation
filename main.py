@@ -3,6 +3,7 @@ import pandas as pd
 import glob
 from pathlib import Path
 from fpdf import FPDF
+import webbrowser
 
 
 def pt2mm(points):
@@ -34,7 +35,6 @@ for filepath in glob.glob("invoices/*.xlsx"):
     for header, width in zip(headers, widths):
         pdf.set_font(family="Times", size=10, style="B")
         pdf.set_text_color(80, 80, 80)
-        print(header, width)
         pdf.cell(w=width, h=8, border=1, txt=header)
     pdf.ln()
 
@@ -49,10 +49,34 @@ for filepath in glob.glob("invoices/*.xlsx"):
         pdf.cell(w=30, h=8, border=1, txt=str(row.total_price))
         pdf.ln()
 
+    # print footers dynamically
+    footers = ["" for header in range(len(df.columns) - 1)]
+    total_sum = str(df.total_price.sum())
+    footers.append(total_sum)
+    widths = [30, 70, 30, 30, 30]
+    for footer, width in zip(footers, widths):
+        pdf.set_font(family="Times", size=10, style="B")
+        pdf.set_text_color(80, 80, 80)
+        border = 1 if footer != "" else 0
+        print(border, type(border))
+        pdf.cell(w=width, h=8, border=border, txt=footer)
+    pdf.ln()
+
+    # add total sum
+    pdf.set_font(family="Times", size=10)
+    pdf.cell(w=30, h=8, border=0, txt=f"The total price is: {total_sum}", ln=1)
+
+    # add company name and logo
+    pdf.set_font(family="Times", size=14, style="B")
+    pdf.cell(w=30, h=8, border=0, txt="PythonHow")
+    pdf.image("pythonhow.png", w=10)
+
 
     # create PDF
     outfile = Path(f"pdf/{filename}.pdf")
     outdir = outfile.parent
     if not outdir.exists():
         outdir.mkdir()
-    pdf.output(outfile)
+    pdf.output(str(outfile))
+
+webbrowser.open(str(outfile))
